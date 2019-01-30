@@ -20,8 +20,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 
-import com.google.firebase.ml.vision.common.FirebaseVisionImage;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -45,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button btn = this.findViewById(R.id.button);
         Button btn1= this.findViewById(R.id.button1);
+        Button btn2 = this.findViewById(R.id.button2);
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -57,7 +56,12 @@ public class MainActivity extends AppCompatActivity {
                 button_checkPic(view);
             }
         });
-
+        btn2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                button_checkPicGC(view);
+            }
+        });
 
     }
 
@@ -122,6 +126,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
+
+        int originalWidth = bitmap.getWidth();
+        int originalHeight = bitmap.getHeight();
+        int resizedWidth = maxDimension;
+        int resizedHeight = maxDimension;
+
+        if (originalHeight > originalWidth) {
+            resizedHeight = maxDimension;
+            resizedWidth = (int) (resizedHeight * (float) originalWidth / (float) originalHeight);
+        } else if (originalWidth > originalHeight) {
+            resizedWidth = maxDimension;
+            resizedHeight = (int) (resizedWidth * (float) originalHeight / (float) originalWidth);
+        } else if (originalHeight == originalWidth) {
+            resizedHeight = maxDimension;
+            resizedWidth = maxDimension;
+        }
+        return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false);
+    }
+
     public void button_checkPic(View v){
         //이미지 판별 java로 이동해서
         //이미지 확인 후, book이면 책이 맞다고 판별
@@ -151,17 +175,20 @@ public class MainActivity extends AppCompatActivity {
             }catch (IOException e){
                 e.printStackTrace();
             }
+            //파이어베이스 코드 임시 비활성화//
+            /*
             // [START image_from_bitmap]
             FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(btm);
             // [END image_from_bitmap]
             ImageLabelML labelML = new ImageLabelML(image);
             labelML.runDetector();
             String resML = labelML.getResultML();
-
+            */
+            //파이어베이스 코드 임시 비활성화
 
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("결과");
-            builder.setMessage("이것은 " + resML + "입니다 ");
+            builder.setMessage("이것은 " + /*resML*/  "입니다 ");
             builder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -180,6 +207,27 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void button_checkPicGC(View v) {
+        if (isimageFileValid == 0) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("오류");
+            builder.setMessage("판별할 사진이 없습니다. 사진을 촬영해 주세요.");
+            builder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        } else {//사진판별해주는 자바로 넘어가야함. 비트맵파일도 같이 전송
+            Intent it2 = new Intent(getApplicationContext(),ImageLabelGC.class);
+            it2.putExtra("photoUri",photoUri.toString());
+            startActivity(it2);
+
+
+        }
+    }
     private File createImageFile() throws IOException{
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "TEST_" + timeStamp + "_";
@@ -190,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
                 storageDir      /*directory*/
         );
         imageFilePath = image.getAbsolutePath();
+
         return image;
     }
 
