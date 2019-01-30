@@ -1,6 +1,7 @@
 package org.androidtown.bookprice;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -11,6 +12,7 @@ import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -27,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     ImageView imageView;
     private String imageFilePath;
     private Uri photoUri;
+    private int isimageFileValid = 0;//이미지가 있으면 1, 없으면 0 초기는 0
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if(photoFile !=null){
+                    isimageFileValid=1;//이미지가 있으니 1로 변환
                     photoUri = FileProvider.getUriForFile(this,getPackageName(),photoFile);
                     intent.putExtra(MediaStore.EXTRA_OUTPUT,photoUri);
                     startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
@@ -109,6 +113,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void button_checkPic(View v){
+        //이미지 판별 java로 이동해서
+        //이미지 확인 후, book이면 책이 맞다고 판별
+        //(추후)만약 책이 맞으면 이미지 추출까지 한번에 진행.로딩바 구현해야함
+        //책이 아니면 아니라고 얼러트뷰
+        //이미지가 없으면 없다고 에러얼러트
+        if(isimageFileValid==0){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("오류");
+            builder.setMessage("판별할 사진이 없습니다. 사진을 촬영해 주세요.");
+            builder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }else{//사진판별해주는 자바로 넘어가야함. 비트맵파일도 같이 전송
+            //Intent it2 = new Intent(getApplicationContext(),ImageLabelML.class);
+            //it2.putExtra("photoUri",photoUri.toString());
+
+            ImageLabelML labelML = new ImageLabelML(photoUri);
+
+
+
+
+
+        }
+
+
 
     }
 
