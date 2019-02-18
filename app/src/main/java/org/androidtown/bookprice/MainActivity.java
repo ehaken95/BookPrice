@@ -1,6 +1,7 @@
 package org.androidtown.bookprice;
 
 import android.Manifest;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -63,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private String photoUri;
     private File imgt;//이미지 회전을 위해 임시저장경로
     private String imageFilePath;
-
+    public  String booktitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,12 +79,47 @@ public class MainActivity extends AppCompatActivity {
             builder
                     .setMessage(R.string.dialog_select_prompt)
                     .setPositiveButton(R.string.dialog_select_gallery, (dialog, which) -> startGalleryChooser())
-                    .setNegativeButton(R.string.dialog_select_camera, (dialog, which) -> startCamera());
+                    .setNeutralButton(R.string.dialog_select_camera, (dialog, which) -> startCamera())
+                    .setNegativeButton("server", (dialog, which) -> startServer());
             builder.create().show();
         });
 
         mImageDetails = findViewById(R.id.image_details);
         mMainImage = findViewById(R.id.main_image);
+
+
+
+    }
+    public class NetworkTask extends AsyncTask<Void, Void, String> {
+
+        private String url;
+        private ContentValues values;
+
+        public NetworkTask(String url, ContentValues values) {
+
+            this.url = url;
+            this.values = values;
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            String result; // 요청 결과를 저장할 변수.
+            RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
+            result = requestHttpURLConnection.request(url, values); // 해당 URL로 부터 결과물을 얻어온다.
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+
+
+            //doInBackground()로 부터 리턴된 값이 onPostExecute()의 매개변수로 넘어오므로 s를 출력한다.
+            //tv_outPut.setText(s);
+            mImageDetails.setText(s);
+        }
     }
 
     //사진 회전하기
@@ -115,6 +151,52 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void startServer(){
+        String url = "http://61.78.86.84:3000/?name=";//뒤에 추가로 붙여줌
+        String turl = "http://61.78.86.84:3000/?name=";
+        booktitle = mImageDetails.getText().toString();
+        String serversendString;
+        //개행문자로 구분해서 배열에 저장함
+        String[] change_title = booktitle.split("\\n");
+
+        //공백 제거작업
+        for(int i=0;i<change_title.length;i++){
+            change_title[i]=change_title[i].replaceAll(" ","");
+        }
+
+
+        //12 23 34 45 식으로 서버에 계속 전송
+        if(change_title.length==2)
+        {
+            serversendString = change_title[0]+change_title[1];
+            url= turl+serversendString;
+            // AsyncTask를 통해 HttpURLConnection 수행.
+            NetworkTask networkTask = new NetworkTask(url, null);
+            networkTask.execute();
+
+        }
+        else {
+            for (int i = 0; i < change_title.length - 1; i++) {
+                serversendString = change_title[i] + change_title[i + 1];
+                url= turl+serversendString;
+                // AsyncTask를 통해 HttpURLConnection 수행.
+                NetworkTask networkTask = new NetworkTask(url, null);
+                networkTask.execute();
+                int j=0;
+                while(true){
+                    j++;
+                    if(j>1000){
+                        break;
+                    }
+                }
+                if(Integer.parseInt(mImageDetails.getText().toString())>0){
+                    break;
+                }
+            }
+        }
+        
+
+    }
     public void startCamera() {
         if (PermissionUtils.requestPermission(
                 this,
@@ -306,6 +388,7 @@ public class MainActivity extends AppCompatActivity {
             if (activity != null && !activity.isFinishing()) {
                 TextView imageDetail = activity.findViewById(R.id.image_details);
                 imageDetail.setText(result);
+                //여기가 구글 클라우드 비전에서 결과들어오는곳
             }
         }
     }
