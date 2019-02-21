@@ -35,6 +35,25 @@
         android:src="?android:attr/actionModeWebSearchDrawable"
         app:backgroundTint="@color/colorPrimary"
         app:layout_anchor="@+id/include"
+        app:layout_anchorGravity="bottom|left" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/textsearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="?android:attr/actionModeWebSearchDrawable"
+        app:backgroundTint="@color/colorPrimaryDark"
+        app:layout_anchor="@+id/include"
         app:layout_anchorGravity="bottom|center" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/searchserver"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="?android:attr/actionModeWebSearchDrawable"
+        app:layout_anchor="@+id/include"
+        app:layout_anchorGravity="right|bottom" />
 
 </android.support.design.widget.CoordinatorLayout>

@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
     private File imgt;//이미지 회전을 위해 임시저장경로
     private String imageFilePath;
     public  String booktitle;
+    public int selectMode=1;//1이면 책판별, 2이면 텍스트 판별
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,13 +75,41 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+
+        //책인지 아닌지 판별
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(view -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            selectMode=1;
             builder
-                    .setMessage(R.string.dialog_select_prompt)
+                    .setMessage("책인지 아닌지 판별")
                     .setPositiveButton(R.string.dialog_select_gallery, (dialog, which) -> startGalleryChooser())
-                    .setNeutralButton(R.string.dialog_select_camera, (dialog, which) -> startCamera())
+                    .setNegativeButton(R.string.dialog_select_camera, (dialog, which) -> startCamera());
+            builder.create().show();
+
+        });
+
+        //책 텍스트 판별
+        FloatingActionButton fab1 = findViewById(R.id.textsearch);
+        fab1.setOnClickListener(view -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            selectMode=2;
+            builder
+                    .setMessage("책 속의 텍스트 판별")
+                    .setPositiveButton(R.string.dialog_select_gallery, (dialog, which) -> startGalleryChooser())
+                    .setNegativeButton(R.string.dialog_select_camera, (dialog, which) -> startCamera());
+            builder.create().show();
+
+        });//버튼만 누르면 알아서 되게끔 수정할것
+
+
+        //서버 시작
+        //아직 책 string정보를 넘기는 과정 미완성
+        FloatingActionButton fab2 = findViewById(R.id.searchserver);
+        fab2.setOnClickListener(view -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder
+                    .setMessage("서버 통신")
                     .setNegativeButton("server", (dialog, which) -> startServer());
             builder.create().show();
         });
@@ -194,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        
+
 
     }
     public void startCamera() {
@@ -339,8 +369,13 @@ public class MainActivity extends AppCompatActivity {
             // add the features we want
             annotateImageRequest.setFeatures(new ArrayList<Feature>() {{
                 Feature labelDetection = new Feature();
-                labelDetection.setType("TEXT_DETECTION");
-                //labelDetection.setType("LABEL_DETECTION");
+                if(selectMode == 1)
+                {
+                    labelDetection.setType("LABEL_DETECTION");
+                }
+                else if(selectMode == 2) {
+                    labelDetection.setType("TEXT_DETECTION");
+                }
                 labelDetection.setMaxResults(MAX_LABEL_RESULTS);
                 add(labelDetection);
             }});
@@ -358,6 +393,7 @@ public class MainActivity extends AppCompatActivity {
         return annotateRequest;
     }
 
+    //책판별
     private static class LableDetectionTask extends AsyncTask<Object, Void, String> {
         private final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
@@ -372,6 +408,44 @@ public class MainActivity extends AppCompatActivity {
             try {
                 Log.d(TAG, "created Cloud Vision request object, sending request");
                 BatchAnnotateImagesResponse response = mRequest.execute();
+
+                return convertResponseToStringbook(response);
+
+            } catch (GoogleJsonResponseException e) {
+                Log.d(TAG, "failed to make API request because " + e.getContent());
+            } catch (IOException e) {
+                Log.d(TAG, "failed to make API request because of other IOException " +
+                        e.getMessage());
+            }
+            return "Cloud Vision API request failed. Check logs for details.";
+        }
+
+        protected void onPostExecute(String result) {
+            MainActivity activity = mActivityWeakReference.get();
+            if (activity != null && !activity.isFinishing()) {
+                TextView imageDetail = activity.findViewById(R.id.image_details);
+                imageDetail.setText(result);
+                //여기가 구글 클라우드 비전에서 결과들어오는곳
+            }
+        }
+    }
+
+    //텍스트 판별
+    private static class LableDetectionTask2 extends AsyncTask<Object, Void, String> {
+        private final WeakReference<MainActivity> mActivityWeakReference;
+        private Vision.Images.Annotate mRequest;
+
+        LableDetectionTask2(MainActivity activity, Vision.Images.Annotate annotate) {
+            mActivityWeakReference = new WeakReference<>(activity);
+            mRequest = annotate;
+        }
+
+        @Override
+        protected String doInBackground(Object... params) {
+            try {
+                Log.d(TAG, "created Cloud Vision request object, sending request");
+                BatchAnnotateImagesResponse response = mRequest.execute();
+
                 return convertResponseToString(response);
 
             } catch (GoogleJsonResponseException e) {
@@ -393,14 +467,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private void callCloudVision(final Bitmap bitmap) {
         // Switch text to loading
         mImageDetails.setText(R.string.loading_message);
 
         // Do the real work in an async task, because we need to use the network anyway
         try {
-            AsyncTask<Object, Void, String> labelDetectionTask = new LableDetectionTask(this, prepareAnnotationRequest(bitmap));
-            labelDetectionTask.execute();
+            if(selectMode==1) {//책 판별
+                AsyncTask<Object, Void, String> labelDetectionTask = new LableDetectionTask(this, prepareAnnotationRequest(bitmap));
+                labelDetectionTask.execute();
+            }else if(selectMode==2){//텍스트 판별
+                AsyncTask<Object, Void, String> labelDetectionTask = new LableDetectionTask2(this, prepareAnnotationRequest(bitmap));
+                labelDetectionTask.execute();
+            }
         } catch (IOException e) {
             Log.d(TAG, "failed to make API request because of other IOException " +
                     e.getMessage());
@@ -428,15 +508,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //책판별일경우
-    /*
-    private static String convertResponseToString(BatchAnnotateImagesResponse response) {
+    private static String convertResponseToStringbook(BatchAnnotateImagesResponse response) {
         StringBuilder message = new StringBuilder("I found these things:\n\n");
 
         List<EntityAnnotation> labels = response.getResponses().get(0).getLabelAnnotations();
         if (labels != null) {
             for (EntityAnnotation label : labels) {
+                if(label.getDescription().equals("Paper") || label.getDescription().equals("Text") || label.getDescription().equals("Font"))  {
+                    message.append(String.format(Locale.US, "%.3f: %s", label.getScore(), "Book"));
+                    message.append("\n");
+                }
+                else{
                 message.append(String.format(Locale.US, "%.3f: %s", label.getScore(), label.getDescription()));
                 message.append("\n");
+                }
             }
         } else {
             message.append("nothing");
@@ -444,8 +529,7 @@ public class MainActivity extends AppCompatActivity {
 
         return message.toString();
     }
-    */
-
+    
     //텍스트판별일경우
     private static String convertResponseToString(BatchAnnotateImagesResponse response) {
         String message = "I found these things:\n\n";
@@ -457,7 +541,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return message;
     }
-
-
-
 }
