@@ -1,6 +1,7 @@
 package org.androidtown.bookprice;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -131,6 +132,18 @@ public class MainActivity extends AppCompatActivity {
             this.values = values;
         }
 
+        ProgressDialog asyncDialog = new ProgressDialog(MainActivity.this);
+
+        @Override
+        protected void onPreExecute(){
+            asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            asyncDialog.setMessage("서버와 통신 중 입니다...");
+            //show dialog
+            asyncDialog.show();
+            super.onPreExecute();
+        }
+
+
         @Override
         protected String doInBackground(Void... params) {
 
@@ -149,6 +162,8 @@ public class MainActivity extends AppCompatActivity {
             //doInBackground()로 부터 리턴된 값이 onPostExecute()의 매개변수로 넘어오므로 s를 출력한다.
             //tv_outPut.setText(s);
             mImageDetails.setText(s);
+
+            asyncDialog.dismiss();
         }
     }
 
@@ -199,6 +214,7 @@ public class MainActivity extends AppCompatActivity {
         if(change_title.length==2)
         {
             serversendString = change_title[0]+change_title[1];
+            Log.d(TAG,"sending message is the : " + serversendString);
             url= turl+serversendString;
             // AsyncTask를 통해 HttpURLConnection 수행.
             NetworkTask networkTask = new NetworkTask(url, null);
@@ -209,9 +225,15 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < change_title.length - 1; i++) {
                 serversendString = change_title[i] + change_title[i + 1];
                 url= turl+serversendString;
+                Log.d(TAG,"sending message length is : " + change_title.length);
+                Log.d(TAG,"sending message is the : " + serversendString);
                 // AsyncTask를 통해 HttpURLConnection 수행.
                 NetworkTask networkTask = new NetworkTask(url, null);
                 networkTask.execute();
+                /*
+                no data=책없
+                no sell= yes24중고책없
+                 */
                 int j=0;
                 while(true){
                     j++;
@@ -219,7 +241,8 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     }
                 }
-                if(Integer.parseInt(mImageDetails.getText().toString())>0){
+                if(!mImageDetails.getText().toString().equals("no data") && !mImageDetails.getText().toString().equals("no sell")){
+                    Log.d(TAG,"sending message result is ok. so it is : " + mImageDetails.getText().toString());
                     break;
                 }
             }
@@ -529,7 +552,7 @@ public class MainActivity extends AppCompatActivity {
 
         return message.toString();
     }
-    
+
     //텍스트판별일경우
     private static String convertResponseToString(BatchAnnotateImagesResponse response) {
         String message = "I found these things:\n\n";
