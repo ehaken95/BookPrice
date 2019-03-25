@@ -63,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView mImageDetails;
     private ImageView mMainImage;
-    private String photoUri;
     private File imgt;//이미지 회전을 위해 임시저장경로
     private String imageFilePath;
     public  String booktitle;
@@ -121,7 +120,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-    public class NetworkTask extends AsyncTask<Void, Void, String> {
+
+    //책 가격을 가져오는 서버와 통신하는 부분
+    public class NetworkTask extends AsyncTask<String, Void, String> {
 
         private String url;
         private ContentValues values;
@@ -145,19 +146,66 @@ public class MainActivity extends AppCompatActivity {
 
 
         @Override
-        protected String doInBackground(Void... params) {
+        protected String doInBackground(String... params) {
 
+            //전송하기 위한 스트링 변수
+            String serversendletter;
+            String turl = url;
+            String[] change_title = params[0].split("\\n");
+
+            String result="empty"; // 요청 결과를 저장할 변수.
+
+            //공백 제거작업
+            for(int i=0;i<change_title.length;i++){
+                change_title[i]=change_title[i].replaceAll(" ","");
+            }
+
+            //12 23 34 45 식으로 서버에 계속 전송
+            if(params.length==2)
+            {
+                serversendletter = change_title[0]+change_title[1];
+                Log.d(TAG,"sending message is the : " + serversendletter);
+                turl= url+serversendletter;
+
+                RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
+                result = requestHttpURLConnection.request(turl, values); // 해당 URL로 부터 결과물을 얻어온다.
+
+            }
+            else {
+                for (int i = 0; i < change_title.length - 1; i++) {
+                    serversendletter = change_title[i] + change_title[i + 1];
+                    turl = url + serversendletter;
+                    Log.d(TAG, "sending message length is : " + change_title.length);
+                    Log.d(TAG, "sending message is the : " + serversendletter);
+                    // AsyncTask를 통해 HttpURLConnection 수행.
+                    /*
+                    no data=책없
+                    no sell= yes24중고책없
+                     */
+
+                    RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
+                    result = requestHttpURLConnection.request(turl, values); // 해당 URL로 부터 결과물을 얻어온다.
+
+                    if (!result.equals("no data") && !result.equals("no sell")) {
+                        Log.d(TAG, "sending message url is : " + turl);
+                        Log.d(TAG, "sending message result is ok. so it is : " + result);
+                        break;
+                    }
+
+                }
+            }
+
+            /*
             String result; // 요청 결과를 저장할 변수.
             RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
             result = requestHttpURLConnection.request(url, values); // 해당 URL로 부터 결과물을 얻어온다.
-
+               */
             return result;
         }
 
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-
 
             //doInBackground()로 부터 리턴된 값이 onPostExecute()의 매개변수로 넘어오므로 s를 출력한다.
             //tv_outPut.setText(s);
@@ -197,10 +245,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startServer(){
-        String url = "http://61.78.86.84:3000/?name=";//뒤에 추가로 붙여줌
-        String turl = "http://61.78.86.84:3000/?name=";
+        String url = "http://183.101.21.11:3000/?name=";//뒤에 추가로 붙여줌
+
         booktitle = mImageDetails.getText().toString();
-        String serversendString;
         //개행문자로 구분해서 배열에 저장함
         String[] change_title = booktitle.split("\\n");
 
@@ -209,44 +256,14 @@ public class MainActivity extends AppCompatActivity {
             change_title[i]=change_title[i].replaceAll(" ","");
         }
 
+        //*******************
+        //AsyncTask는 단 한번만 execute가 가능하다.
+        //한번 돈 이후는 GC에 의해 삭제되어 런타임 에러가 발생한다.
+        //따라서 반복문은 AsyncTask에서 수행한다.
 
-        //12 23 34 45 식으로 서버에 계속 전송
-        if(change_title.length==2)
-        {
-            serversendString = change_title[0]+change_title[1];
-            Log.d(TAG,"sending message is the : " + serversendString);
-            url= turl+serversendString;
-            // AsyncTask를 통해 HttpURLConnection 수행.
-            NetworkTask networkTask = new NetworkTask(url, null);
-            networkTask.execute();
-
-        }
-        else {
-            for (int i = 0; i < change_title.length - 1; i++) {
-                serversendString = change_title[i] + change_title[i + 1];
-                url= turl+serversendString;
-                Log.d(TAG,"sending message length is : " + change_title.length);
-                Log.d(TAG,"sending message is the : " + serversendString);
-                // AsyncTask를 통해 HttpURLConnection 수행.
-                NetworkTask networkTask = new NetworkTask(url, null);
-                networkTask.execute();
-                /*
-                no data=책없
-                no sell= yes24중고책없
-                 */
-                int j=0;
-                while(true){
-                    j++;
-                    if(j>1000){
-                        break;
-                    }
-                }
-                if(!mImageDetails.getText().toString().equals("no data") && !mImageDetails.getText().toString().equals("no sell")){
-                    Log.d(TAG,"sending message result is ok. so it is : " + mImageDetails.getText().toString());
-                    break;
-                }
-            }
-        }
+        // AsyncTask를 통해 HttpURLConnection 수행.
+        NetworkTask networkTask = new NetworkTask(url, null);
+        networkTask.execute(booktitle);
 
 
     }

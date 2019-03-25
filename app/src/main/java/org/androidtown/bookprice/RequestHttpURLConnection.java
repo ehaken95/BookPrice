@@ -60,6 +60,10 @@ public class RequestHttpURLConnection {
 
             // [2-1]. urlConn 설정.
             urlConn.setRequestMethod("POST"); // URL 요청에 대한 메소드 설정 : POST.
+
+            urlConn.setConnectTimeout(3000);//연결 요청시 3초의 대기시간
+            urlConn.setReadTimeout(3000);//
+
             urlConn.setRequestProperty("Accept-Charset", "UTF-8"); // Accept-Charset 설정.
             urlConn.setRequestProperty("Context_Type", "application/x-www-form-urlencoded;cahrset=UTF-8");
 
