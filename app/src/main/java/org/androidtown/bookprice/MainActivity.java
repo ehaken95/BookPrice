@@ -3,6 +3,7 @@ package org.androidtown.bookprice;
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -17,7 +18,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int CAMERA_IMAGE_REQUEST = 3;
 
     private TextView mImageDetails;
+    private TextView mBookTitle;
     private ImageView mMainImage;
     private File imgt;//이미지 회전을 위해 임시저장경로
     private String imageFilePath;
@@ -72,8 +73,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+
+
+        //테스트 완료
+        //카메라+앨범추저 유지
+        //책판별 해독->조건문 판별
+        //서버 통신시작
+        //selectMode
+        //부분 지워야함
 
 
         //책인지 아닌지 판별
@@ -82,9 +89,9 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             selectMode=1;
             builder
-                    .setMessage("책인지 아닌지 판별")
-                    .setPositiveButton(R.string.dialog_select_gallery, (dialog, which) -> startGalleryChooser())
-                    .setNegativeButton(R.string.dialog_select_camera, (dialog, which) -> startCamera());
+                    .setMessage("사진을 불러올 기능을 선택해 주세요")
+                    .setPositiveButton("갤러리", (dialog, which) -> startGalleryChooser())
+                    .setNegativeButton("카메라", (dialog, which) -> startCamera());
             builder.create().show();
 
         });
@@ -102,9 +109,9 @@ public class MainActivity extends AppCompatActivity {
 
         });//버튼만 누르면 알아서 되게끔 수정할것
 
+        //위아래 합쳐야함
 
         //서버 시작
-        //아직 책 string정보를 넘기는 과정 미완성
         FloatingActionButton fab2 = findViewById(R.id.searchserver);
         fab2.setOnClickListener(view -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -116,7 +123,8 @@ public class MainActivity extends AppCompatActivity {
 
         mImageDetails = findViewById(R.id.image_details);
         mMainImage = findViewById(R.id.main_image);
-
+        //보이지 않는 텍스트뷰
+        mBookTitle = findViewById(R.id.labeldetection);
 
 
     }
@@ -208,8 +216,8 @@ public class MainActivity extends AppCompatActivity {
             super.onPostExecute(s);
 
             //doInBackground()로 부터 리턴된 값이 onPostExecute()의 매개변수로 넘어오므로 s를 출력한다.
-            //tv_outPut.setText(s);
-            mImageDetails.setText(s);
+            //해당 부분은 추후 어떠한 int값으로 전달되고, 이  int값과 aging기법으로 계산되어 사용자에게 보여진다
+            mImageDetails.setText(s);//여기 바꾸셈!
 
             asyncDialog.dismiss();
         }
@@ -247,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
     public void startServer(){
         String url = "http://183.101.21.11:3000/?name=";//뒤에 추가로 붙여줌
 
-        booktitle = mImageDetails.getText().toString();
+        booktitle = mBookTitle.getText().toString();
         //개행문자로 구분해서 배열에 저장함
         String[] change_title = booktitle.split("\\n");
 
@@ -500,7 +508,7 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             MainActivity activity = mActivityWeakReference.get();
             if (activity != null && !activity.isFinishing()) {
-                TextView imageDetail = activity.findViewById(R.id.image_details);
+                TextView imageDetail = activity.findViewById(R.id.labeldetection);
                 imageDetail.setText(result);
                 //여기가 구글 클라우드 비전에서 결과들어오는곳
             }
@@ -510,7 +518,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void callCloudVision(final Bitmap bitmap) {
         // Switch text to loading
-        mImageDetails.setText(R.string.loading_message);
+        mImageDetails.setText("잠시만 기다려 주세요. 판별중입니다..");
 
         // Do the real work in an async task, because we need to use the network anyway
         try {
@@ -547,24 +555,54 @@ public class MainActivity extends AppCompatActivity {
         return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false);
     }
 
+
+    void checkUserToInf(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder//여기에 텍스트 넣을 방법 찾아야함
+                .setTitle("알림")
+                .setMessage("확인된 책의 제목은 다음과 같습니다.")
+                .setPositiveButton("판별 시작", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //다음 화면으로 넘어가기 시작
+                        ;
+                    }
+                })
+                .setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                });
+        builder.create().show();
+    }
+
+
+
     //책판별일경우
     private static String convertResponseToStringbook(BatchAnnotateImagesResponse response) {
-        StringBuilder message = new StringBuilder("I found these things:\n\n");
+        StringBuilder message = new StringBuilder("잠시만 기다려 주세요. 판별중입니다..\n\n");
 
         List<EntityAnnotation> labels = response.getResponses().get(0).getLabelAnnotations();
         if (labels != null) {
             for (EntityAnnotation label : labels) {
-                if(label.getDescription().equals("Paper") || label.getDescription().equals("Text") || label.getDescription().equals("Font"))  {
-                    message.append(String.format(Locale.US, "%.3f: %s", label.getScore(), "Book"));
-                    message.append("\n");
+                if(label.getDescription().equals("Paper") || label.getDescription().equals("Text") || label.getDescription().equals("Font")
+                        || label.getDescription().equals("Book"))  {
+                    message = new StringBuilder("이 사진은" + " ");
+                    String ss = String.format(Locale.US, "%.3f", label.getScore());
+                    Float ft = Float.parseFloat(ss);
+                    ft=ft*100;
+                    message.append(ft + " % 확률로 책입니다!");
+                    break;
                 }
                 else{
-                message.append(String.format(Locale.US, "%.3f: %s", label.getScore(), label.getDescription()));
-                message.append("\n");
+                    //책이 아니거나 사진이 없습니다.
+                    message = new StringBuilder("책이 아닙니다. 다시 정확하게 촬영해 주세요");
                 }
             }
         } else {
-            message.append("nothing");
+            //책이 아니거나 사진이 없습니다.
+            message = new StringBuilder("책이 아닙니다. 다시 정확하게 촬영해 주세요");
         }
 
         return message.toString();
@@ -572,7 +610,7 @@ public class MainActivity extends AppCompatActivity {
 
     //텍스트판별일경우
     private static String convertResponseToString(BatchAnnotateImagesResponse response) {
-        String message = "I found these things:\n\n";
+        String message = "find\n\n";
         List<EntityAnnotation> labels = response.getResponses().get(0).getTextAnnotations();
         if (labels != null) {
             message  = labels.get(0).getDescription();
