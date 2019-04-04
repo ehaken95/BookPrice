@@ -71,7 +71,7 @@
             android:layout_height="0dp"
             android:gravity="center"
             android:layout_weight="1"
-            android:text="조건1" />
+            android:text="A-얼룩짐 및 낙서" />
     </LinearLayout>
 
 
@@ -84,6 +84,7 @@
     android:orientation="vertical">
 
         <RadioGroup
+            android:id="@+id/rgp1"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -94,21 +95,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="조건1_1" />
+                android:text="매우심함" />
 
             <RadioButton
                 android:id="@+id/rop1_2"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="조건1_2" />
+                android:text="보통" />
 
             <RadioButton
                 android:id="@+id/rop1_3"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="조건1_3" />
+                android:text="매우깔끔" />
             </RadioGroup>
     </LinearLayout>
 
@@ -127,7 +128,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="조건2" />
+            android:text="B-훼손도(찢어짐 등)" />
     </LinearLayout>
 
 
@@ -140,6 +141,7 @@
         android:orientation="vertical">
 
         <RadioGroup
+            android:id="@+id/rgp2"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -150,21 +152,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="조건2_1" />
+                android:text="매우심함" />
 
             <RadioButton
                 android:id="@+id/rop2_2"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="조건2_2" />
+                android:text="보통" />
 
             <RadioButton
                 android:id="@+id/rop2_3"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="조건2_3" />
+                android:text="매우깔끔" />
         </RadioGroup>
     </LinearLayout>
 
@@ -184,7 +186,7 @@
             android:layout_height="0dp"
             android:gravity="center"
             android:layout_weight="1"
-            android:text="조건3" />
+            android:text="구입시기" />
     </LinearLayout>
 
 
@@ -197,6 +199,7 @@
         android:orientation="vertical">
 
         <RadioGroup
+            android:id="@+id/rgp3"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -207,21 +210,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="조건3_1" />
+                android:text="10년 이내" />
 
             <RadioButton
                 android:id="@+id/rop3_2"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="조건3_2" />
+                android:text="5년 이내" />
 
             <RadioButton
                 android:id="@+id/rop3_3"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="조건3_3" />
+                android:text="1년 이내" />
         </RadioGroup>
     </LinearLayout>
 
