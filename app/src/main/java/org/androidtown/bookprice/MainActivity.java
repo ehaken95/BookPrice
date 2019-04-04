@@ -1,9 +1,13 @@
 package org.androidtown.bookprice;
 
 import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -15,9 +19,9 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,6 +46,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -59,31 +64,339 @@ public class MainActivity extends AppCompatActivity {
     public static final int CAMERA_IMAGE_REQUEST = 3;
 
     private TextView mImageDetails;
+    private TextView mBookTitle;//보이지 않는 텍스트뷰
     private ImageView mMainImage;
-    private String photoUri;
     private File imgt;//이미지 회전을 위해 임시저장경로
     private String imageFilePath;
-
+    public  String booktitle;
+    public int selectMode=1;//1이면 책판별, 2이면 텍스트 판별
+    public String rgstring1="x";
+    public int sel1=0;
+    public String rgstring2="x";
+    public int sel2=0;
+    public String rgstring3="x";
+    public int sel3=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
+
+        //테스트 완료
+        //카메라+앨범추저 유지
+        //책판별 해독->조건문 판별
+        //서버 통신시작
+        //selectMode
+        //부분 지워야함
+
+        /*
+        A - 얼룩짐 및 낙서
+        1.매우심함
+        2.보통
+        3.매우깔끔
+
+        B - 훼손도(찢어짐 등)
+        1.매우심함
+        2.보통
+        3.매우깔끔
+
+        C - 구입시기
+        1.10년 이내
+        2.5년 이내
+        3.1년 이내
+         */
+
+        RadioGroup rg1 = findViewById(R.id.rgp1);
+        RadioGroup rg2 = findViewById(R.id.rgp2);
+        RadioGroup rg3 = findViewById(R.id.rgp3);
+
+
+        //A 얼룩짐 및 낙서
+        rg1.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                if(i == R.id.rop1_1){
+                    rgstring1 = "매우심함";
+                    sel1 = 1;
+                }
+                else if( i == R.id.rop1_2){
+                    rgstring1 = "보통";
+                    sel1 = 2;
+                }
+                else if( i == R.id.rop1_3){
+                    rgstring1 = "매우깔끔";
+                    sel1=3;
+                }
+            }
+        });
+
+        //B 훼손도
+        rg2.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                if(i == R.id.rop2_1){
+                    rgstring2 = "매우심함";
+                    sel2 = 1;
+                }
+                else if( i == R.id.rop2_2){
+                    rgstring2 = "보통";
+                    sel2 = 2;
+                }
+                else if( i == R.id.rop2_3){
+                    rgstring2 = "매우깔끔";
+                    sel2 = 3;
+                }
+            }
+        });
+
+        //C 구입시기
+        rg3.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                if(i == R.id.rop3_1){
+                    rgstring3 = "10년 이내";
+                    sel3 = 1;
+                }
+                else if( i == R.id.rop3_2){
+                    rgstring3 = "5년 이내";
+                    sel3 = 2;
+                }
+                else if( i == R.id.rop3_3){
+                    rgstring3 = "11년 이내";
+                    sel3 = 3;
+                }
+            }
+        });
+
+
+        //책인지 아닌지 판별
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(view -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            selectMode=1;
             builder
-                    .setMessage(R.string.dialog_select_prompt)
-                    .setPositiveButton(R.string.dialog_select_gallery, (dialog, which) -> startGalleryChooser())
+                    .setMessage("사진을 불러올 기능을 선택해 주세요")
+                    .setPositiveButton("갤러리", (dialog, which) -> startGalleryChooser())
+                    .setNegativeButton("카메라", (dialog, which) -> startCamera());
+            builder.create().show();
+
+        });
+
+        //책 텍스트 판별
+        FloatingActionButton fab1 = findViewById(R.id.textsearch);
+        fab1.setOnClickListener(view -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            selectMode=2;
+            builder
+                    .setMessage("책 속의 텍스트 판별")
+                    .setPositiveButton("테스트 시작", (dialog, which) -> /*startGalleryChooser()*/CheckPicture())
                     .setNegativeButton(R.string.dialog_select_camera, (dialog, which) -> startCamera());
+            builder.create().show();
+
+        });//버튼만 누르면 알아서 되게끔 수정할것
+
+        //위아래 합쳐야함
+
+        //서버 시작
+        FloatingActionButton fab2 = findViewById(R.id.searchserver);
+        fab2.setOnClickListener(view -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder
+                    .setMessage("서버 통신")
+                    .setNegativeButton("server", (dialog, which) -> startServer());
             builder.create().show();
         });
 
         mImageDetails = findViewById(R.id.image_details);
         mMainImage = findViewById(R.id.main_image);
+        //보이지 않는 텍스트뷰
+        mBookTitle = findViewById(R.id.labeldetection);
+
+
+    }
+
+    //******************************************
+    public void CheckPicture(){
+
+        TextView isb = findViewById(R.id.labeldetection);
+        String isbook = isb.getText().toString();
+        if(rgstring1.equals("x") || rgstring2.equals("x") || rgstring3.equals("x")){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder
+                    .setTitle("오류")
+                    .setMessage("책의 상태 항목을 선택하지 않았습니다\n책의 상태를 먼저 선택해 주세요.")
+                    .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                        }
+                    });
+            builder.create().show();
+        }else {
+            if (!isbook.equals("1")) {
+                //사진X
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder
+                        .setTitle("오류")
+                        .setMessage("책을 판별하지 않았습니다\n책을 먼저 판별 시켜주세요.")
+                        .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        });
+                builder.create().show();
+
+            } else {
+
+                BitmapDrawable d = (BitmapDrawable) ((ImageView) findViewById(R.id.main_image)).getDrawable();
+                Bitmap b = d.getBitmap();
+                //사진O. 텍스트 판별 시작
+                selectMode = 2;
+                callCloudVision(b);
+                CheckLoadingProgress task = new CheckLoadingProgress();
+                task.execute();
+
+
+            }
+        }
+    }
+
+    //************************************************
+
+    //텍스트 판별 기다리기 위한 로딩창
+    private class CheckLoadingProgress extends AsyncTask<Void, Void, Void>{
+
+        ProgressDialog asyncDialog = new ProgressDialog(MainActivity.this);
+
+        @Override
+        protected  void onPreExecute(){
+            asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            asyncDialog.setMessage("로딩중입니다...");
+
+            //show dialog
+            asyncDialog.show();
+            super.onPreExecute();
+        }
+
+        @Override
+        protected  Void doInBackground(Void... arg0){
+            try{
+                for(int i=0; i<4;i++){
+                    Thread.sleep(1000);
+                }
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result){
+            asyncDialog.dismiss();
+            checkUserToInf();
+            super.onPostExecute(result);
+        }
+
+    }
+
+
+
+
+
+    //책 가격을 가져오는 서버와 통신하는 부분
+    public class NetworkTask extends AsyncTask<String, Void, String> {
+
+        private String url;
+        private ContentValues values;
+
+        public NetworkTask(String url, ContentValues values) {
+
+            this.url = url;
+            this.values = values;
+        }
+
+        ProgressDialog asyncDialog = new ProgressDialog(MainActivity.this);
+
+        @Override
+        protected void onPreExecute(){
+            asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            asyncDialog.setMessage("서버와 통신 중 입니다...");
+            //show dialog
+            asyncDialog.show();
+            super.onPreExecute();
+        }
+
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            //전송하기 위한 스트링 변수
+            String serversendletter;
+            String turl = url;
+            String[] change_title = params[0].split("\\n");
+
+            String result="empty"; // 요청 결과를 저장할 변수.
+
+            //공백 제거작업
+            for(int i=0;i<change_title.length;i++){
+                change_title[i]=change_title[i].replaceAll(" ","");
+            }
+
+            //12 23 34 45 식으로 서버에 계속 전송
+            if(params.length==2)
+            {
+                serversendletter = change_title[0]+change_title[1];
+                Log.d(TAG,"sending message is the : " + serversendletter);
+                turl= url+serversendletter;
+
+                RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
+                result = requestHttpURLConnection.request(turl, values); // 해당 URL로 부터 결과물을 얻어온다.
+
+            }
+            else {
+                for (int i = 0; i < change_title.length - 1; i++) {
+                    serversendletter = change_title[i] + change_title[i + 1];
+                    turl = url + serversendletter;
+                    Log.d(TAG, "sending message length is : " + change_title.length);
+                    Log.d(TAG, "sending message is the : " + serversendletter);
+                    // AsyncTask를 통해 HttpURLConnection 수행.
+                    /*
+                    no data=책없
+                    no sell= yes24중고책없
+                     */
+
+                    RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
+                    result = requestHttpURLConnection.request(turl, values); // 해당 URL로 부터 결과물을 얻어온다.
+
+                    if (!result.equals("no data") && !result.equals("no sell")) {
+                        Log.d(TAG, "sending message url is : " + turl);
+                        Log.d(TAG, "sending message result is ok. so it is : " + result);
+                        break;
+                    }
+
+                }
+            }
+
+            /*
+            String result; // 요청 결과를 저장할 변수.
+            RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
+            result = requestHttpURLConnection.request(url, values); // 해당 URL로 부터 결과물을 얻어온다.
+               */
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+
+            //doInBackground()로 부터 리턴된 값이 onPostExecute()의 매개변수로 넘어오므로 s를 출력한다.
+            //해당 부분은 추후 어떠한 int값으로 전달되고, 이  int값과 aging기법으로 계산되어 사용자에게 보여진다
+            mBookTitle.setText(s);
+
+            asyncDialog.dismiss();
+        }
     }
 
     //사진 회전하기
@@ -115,6 +428,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void startServer(){
+        String url = "http://183.101.21.11:3000/?name=";//뒤에 추가로 붙여줌
+
+        booktitle = mBookTitle.getText().toString();
+        //개행문자로 구분해서 배열에 저장함
+        String[] change_title = booktitle.split("\\n");
+
+        //공백 제거작업
+        for(int i=0;i<change_title.length;i++){
+            change_title[i]=change_title[i].replaceAll(" ","");
+        }
+
+        //*******************
+        //AsyncTask는 단 한번만 execute가 가능하다.
+        //한번 돈 이후는 GC에 의해 삭제되어 런타임 에러가 발생한다.
+        //따라서 반복문은 AsyncTask에서 수행한다.
+
+        // AsyncTask를 통해 HttpURLConnection 수행.
+        NetworkTask networkTask = new NetworkTask(url, null);
+        networkTask.execute(booktitle);
+
+
+    }
     public void startCamera() {
         if (PermissionUtils.requestPermission(
                 this,
@@ -181,6 +517,8 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     exif = new ExifInterface(imageFilePath);
                 } catch (IOException e) {
+                    e.printStackTrace();
+                } catch(IllegalArgumentException e){
                     e.printStackTrace();
                 }
 
@@ -257,8 +595,13 @@ public class MainActivity extends AppCompatActivity {
             // add the features we want
             annotateImageRequest.setFeatures(new ArrayList<Feature>() {{
                 Feature labelDetection = new Feature();
-                labelDetection.setType("TEXT_DETECTION");
-                //labelDetection.setType("LABEL_DETECTION");
+                if(selectMode == 1)
+                {
+                    labelDetection.setType("LABEL_DETECTION");
+                }
+                else if(selectMode == 2) {
+                    labelDetection.setType("TEXT_DETECTION");
+                }
                 labelDetection.setMaxResults(MAX_LABEL_RESULTS);
                 add(labelDetection);
             }});
@@ -276,6 +619,7 @@ public class MainActivity extends AppCompatActivity {
         return annotateRequest;
     }
 
+    //책판별
     private static class LableDetectionTask extends AsyncTask<Object, Void, String> {
         private final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
@@ -290,7 +634,8 @@ public class MainActivity extends AppCompatActivity {
             try {
                 Log.d(TAG, "created Cloud Vision request object, sending request");
                 BatchAnnotateImagesResponse response = mRequest.execute();
-                return convertResponseToString(response);
+
+                return convertResponseToStringbook(response);
 
             } catch (GoogleJsonResponseException e) {
                 Log.d(TAG, "failed to make API request because " + e.getContent());
@@ -305,19 +650,67 @@ public class MainActivity extends AppCompatActivity {
             MainActivity activity = mActivityWeakReference.get();
             if (activity != null && !activity.isFinishing()) {
                 TextView imageDetail = activity.findViewById(R.id.image_details);
+                TextView isbookDet = activity.findViewById(R.id.labeldetection);
                 imageDetail.setText(result);
+                if(result.contains("사진")){
+                    isbookDet.setText("1");
+                }
+                //여기가 구글 클라우드 비전에서 결과들어오는곳
             }
         }
     }
 
+    //텍스트 판별
+    private static class LableDetectionTask2 extends AsyncTask<Object, Void, String> {
+        private final WeakReference<MainActivity> mActivityWeakReference;
+        private Vision.Images.Annotate mRequest;
+
+        LableDetectionTask2(MainActivity activity, Vision.Images.Annotate annotate) {
+            mActivityWeakReference = new WeakReference<>(activity);
+            mRequest = annotate;
+        }
+
+        @Override
+        protected String doInBackground(Object... params) {
+            try {
+                Log.d(TAG, "created Cloud Vision request object, sending request");
+                BatchAnnotateImagesResponse response = mRequest.execute();
+
+                return convertResponseToString(response);
+
+            } catch (GoogleJsonResponseException e) {
+                Log.d(TAG, "failed to make API request because " + e.getContent());
+            } catch (IOException e) {
+                Log.d(TAG, "failed to make API request because of other IOException " +
+                        e.getMessage());
+            }
+            return "Cloud Vision API request failed. Check logs for details.";
+        }
+
+        protected void onPostExecute(String result) {
+            MainActivity activity = mActivityWeakReference.get();
+            if (activity != null && !activity.isFinishing()) {
+                TextView imageDetail = activity.findViewById(R.id.labeldetection);
+                imageDetail.setText(result);
+                //여기가 구글 클라우드 비전에서 결과들어오는곳
+            }
+        }
+    }
+
+
     private void callCloudVision(final Bitmap bitmap) {
         // Switch text to loading
-        mImageDetails.setText(R.string.loading_message);
+        mImageDetails.setText("잠시만 기다려 주세요. 판별중입니다..");
 
         // Do the real work in an async task, because we need to use the network anyway
         try {
-            AsyncTask<Object, Void, String> labelDetectionTask = new LableDetectionTask(this, prepareAnnotationRequest(bitmap));
-            labelDetectionTask.execute();
+            if(selectMode==1) {//책 판별
+                AsyncTask<Object, Void, String> labelDetectionTask = new LableDetectionTask(this, prepareAnnotationRequest(bitmap));
+                labelDetectionTask.execute();
+            }else if(selectMode==2){//텍스트 판별
+                AsyncTask<Object, Void, String> labelDetectionTask = new LableDetectionTask2(this, prepareAnnotationRequest(bitmap));
+                labelDetectionTask.execute();
+            }
         } catch (IOException e) {
             Log.d(TAG, "failed to make API request because of other IOException " +
                     e.getMessage());
@@ -344,28 +737,70 @@ public class MainActivity extends AppCompatActivity {
         return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false);
     }
 
+
+    //*********************************
+
+    public void checkUserToInf(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder//여기에 텍스트 넣을 방법 찾아야함
+                .setTitle("알림")
+                .setMessage("확인된 책의 제목은 다음과 같습니다.\n" + mBookTitle.getText().toString()
+                        +"\n또한, 선택하신 조건은 아래와 같습니다.\n"+rgstring1
+                        + " " + rgstring2+" "+ rgstring3
+                        +"\n중고가 측정을 시작하려면 판별 시작버튼을," +
+                        "\n다시 시도하시려면 취소 버튼을 눌러주세요.")
+                .setPositiveButton("판별 시작", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //다음 화면으로 넘어가기 시작
+                        ;
+                    }
+                })
+                .setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+        builder.create().show();
+    }
+
+    //***************************************
+
+
     //책판별일경우
-    /*
-    private static String convertResponseToString(BatchAnnotateImagesResponse response) {
-        StringBuilder message = new StringBuilder("I found these things:\n\n");
+    private static String convertResponseToStringbook(BatchAnnotateImagesResponse response) {
+        StringBuilder message = new StringBuilder("잠시만 기다려 주세요. 판별중입니다..\n\n");
 
         List<EntityAnnotation> labels = response.getResponses().get(0).getLabelAnnotations();
         if (labels != null) {
             for (EntityAnnotation label : labels) {
-                message.append(String.format(Locale.US, "%.3f: %s", label.getScore(), label.getDescription()));
-                message.append("\n");
+                if(label.getDescription().equals("Paper") || label.getDescription().equals("Text") || label.getDescription().equals("Font")
+                        || label.getDescription().equals("Book"))  {
+                    message = new StringBuilder("이 사진은" + " ");
+                    String ss = String.format(Locale.US, "%.3f", label.getScore());
+                    Float ft = Float.parseFloat(ss);
+                    ft=ft*100;
+                    message.append(ft + " % 확률로 책입니다!");
+
+                    break;
+                }
+                else{
+                    //책이 아니거나 사진이 없습니다.
+                    message = new StringBuilder("책이 아닙니다. 다시 정확하게 촬영해 주세요");
+                }
             }
         } else {
-            message.append("nothing");
+            //책이 아니거나 사진이 없습니다.
+            message = new StringBuilder("책이 아닙니다. 다시 정확하게 촬영해 주세요");
         }
 
         return message.toString();
     }
-    */
 
     //텍스트판별일경우
     private static String convertResponseToString(BatchAnnotateImagesResponse response) {
-        String message = "I found these things:\n\n";
+        String message = "find\n\n";
         List<EntityAnnotation> labels = response.getResponses().get(0).getTextAnnotations();
         if (labels != null) {
             message  = labels.get(0).getDescription();
@@ -374,7 +809,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return message;
     }
-
-
-
 }
