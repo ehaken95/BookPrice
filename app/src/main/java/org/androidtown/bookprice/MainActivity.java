@@ -429,7 +429,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startServer(){
-        String url = "http://183.101.21.11:3000/?name=";//뒤에 추가로 붙여줌
+        String url = "cirnect.asuscomm.com:3000/?name=";//뒤에 추가로 붙여줌
+        //2019.04.10일자로 천슬별 전용 서버 생성
 
         booktitle = mBookTitle.getText().toString();
         //개행문자로 구분해서 배열에 저장함
