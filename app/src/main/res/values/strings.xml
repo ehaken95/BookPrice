@@ -8,7 +8,9 @@
     <string name="dialog_select_prompt">Choose a picture</string>
     <string name="dialog_select_camera">Camera</string>
     <string name="dialog_select_gallery">Gallery</string>
-
+    <string name="condition1">조건1-얼룩짐 및 낙서</string>
+    <string name="condition2">조건2-훼손도(찢어짐 등)</string>
+    <string name="condition3">조건3-구입시기</string>
     <string name="image_picker_error">Something is wrong with that image. Pick a different one please.</string>
 
 </resources>
