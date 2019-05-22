@@ -3,9 +3,9 @@ package org.androidtown.bookprice;
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.ExifInterface;
@@ -20,6 +20,7 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.widget.ImageView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -48,6 +49,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import cn.pedant.SweetAlert.SweetAlertDialog;
+
 
 public class MainActivity extends AppCompatActivity {
     private static final String CLOUD_VISION_API_KEY = "AIzaSyBruupeW_frxcoDgd_-ggl-tPwQVZ_t2ns";
@@ -65,9 +68,10 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView mImageDetails;
     private TextView mBookTitle;//보이지 않는 텍스트뷰
+    private TextView finPrice;
     private ImageView mMainImage;
-    private File imgt;//이미지 회전을 위해 임시저장경로
     private String imageFilePath;
+    public Bitmap bimg;
     public  String booktitle;
     public int selectMode=1;//1이면 책판별, 2이면 텍스트 판별
     public String rgstring1="x";
@@ -113,59 +117,50 @@ public class MainActivity extends AppCompatActivity {
 
 
         //A 얼룩짐 및 낙서
-        rg1.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup radioGroup, int i) {
-                if(i == R.id.rop1_1){
-                    rgstring1 = "매우심함";
-                    sel1 = 1;
-                }
-                else if( i == R.id.rop1_2){
-                    rgstring1 = "보통";
-                    sel1 = 2;
-                }
-                else if( i == R.id.rop1_3){
-                    rgstring1 = "매우깔끔";
-                    sel1=3;
-                }
+        rg1.setOnCheckedChangeListener((radioGroup, i) -> {
+            if(i == R.id.rop1_1){
+                rgstring1 = "매우심함";
+                sel1 = 1;
+            }
+            else if( i == R.id.rop1_2){
+                rgstring1 = "보통";
+                sel1 = 2;
+            }
+            else if( i == R.id.rop1_3){
+                rgstring1 = "매우깔끔";
+                sel1=3;
             }
         });
 
         //B 훼손도
-        rg2.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup radioGroup, int i) {
-                if(i == R.id.rop2_1){
-                    rgstring2 = "매우심함";
-                    sel2 = 1;
-                }
-                else if( i == R.id.rop2_2){
-                    rgstring2 = "보통";
-                    sel2 = 2;
-                }
-                else if( i == R.id.rop2_3){
-                    rgstring2 = "매우깔끔";
-                    sel2 = 3;
-                }
+        rg2.setOnCheckedChangeListener((radioGroup, i) -> {
+            if(i == R.id.rop2_1){
+                rgstring2 = "매우심함";
+                sel2 = 1;
+            }
+            else if( i == R.id.rop2_2){
+                rgstring2 = "보통";
+                sel2 = 2;
+            }
+            else if( i == R.id.rop2_3){
+                rgstring2 = "매우깔끔";
+                sel2 = 3;
             }
         });
 
         //C 구입시기
-        rg3.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup radioGroup, int i) {
-                if(i == R.id.rop3_1){
-                    rgstring3 = "10년 이내";
-                    sel3 = 1;
-                }
-                else if( i == R.id.rop3_2){
-                    rgstring3 = "5년 이내";
-                    sel3 = 2;
-                }
-                else if( i == R.id.rop3_3){
-                    rgstring3 = "11년 이내";
-                    sel3 = 3;
-                }
+        rg3.setOnCheckedChangeListener((radioGroup, i) -> {
+            if(i == R.id.rop3_1){
+                rgstring3 = "10년 이내";
+                sel3 = 1;
+            }
+            else if( i == R.id.rop3_2){
+                rgstring3 = "5년 이내";
+                sel3 = 2;
+            }
+            else if( i == R.id.rop3_3){
+                rgstring3 = "1년 이내";
+                sel3 = 3;
             }
         });
 
@@ -176,9 +171,12 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             selectMode=1;
             builder
-                    .setMessage("사진을 불러올 기능을 선택해 주세요")
-                    .setPositiveButton("갤러리", (dialog, which) -> startGalleryChooser())
-                    .setNegativeButton("카메라", (dialog, which) -> startCamera());
+                    .setMessage("카메라를 실행합니다.")
+                    .setNegativeButton("취소",
+                            (dialog, whichButton) -> {
+                                // Cancel 버튼 클릭시
+                            })
+                    .setPositiveButton("확인", (dialog, which) -> startCamera());
             builder.create().show();
 
         });
@@ -189,48 +187,33 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             selectMode=2;
             builder
-                    .setMessage("책 속의 텍스트 판별")
-                    .setPositiveButton("테스트 시작", (dialog, which) -> /*startGalleryChooser()*/CheckPicture())
-                    .setNegativeButton(R.string.dialog_select_camera, (dialog, which) -> startCamera());
+                    .setMessage("책 속의 텍스트를 판별합니다.")
+                    .setNegativeButton("취소", (dialog, which) -> {})
+                    .setPositiveButton("판별하기", (dialog, which) -> CheckPicture());
             builder.create().show();
 
-        });//버튼만 누르면 알아서 되게끔 수정할것
-
-        //위아래 합쳐야함
-
-        //서버 시작
-        FloatingActionButton fab2 = findViewById(R.id.searchserver);
-        fab2.setOnClickListener(view -> {
-            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-            builder
-                    .setMessage("서버 통신")
-                    .setNegativeButton("server", (dialog, which) -> startServer());
-            builder.create().show();
         });
 
         mImageDetails = findViewById(R.id.image_details);
         mMainImage = findViewById(R.id.main_image);
         //보이지 않는 텍스트뷰
         mBookTitle = findViewById(R.id.labeldetection);
-
+        finPrice = findViewById(R.id.main_finprice);
 
     }
 
     //******************************************
     public void CheckPicture(){
 
-        TextView isb = findViewById(R.id.labeldetection);
-        String isbook = isb.getText().toString();
+        TextView isbk = findViewById(R.id.isbookdetection);
+        String isbook = isbk.getText().toString();
         if(rgstring1.equals("x") || rgstring2.equals("x") || rgstring3.equals("x")){
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder
                     .setTitle("오류")
                     .setMessage("책의 상태 항목을 선택하지 않았습니다\n책의 상태를 먼저 선택해 주세요.")
-                    .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
+                    .setPositiveButton("확인", (dialog, which) -> {
 
-                        }
                     });
             builder.create().show();
         }else {
@@ -240,11 +223,8 @@ public class MainActivity extends AppCompatActivity {
                 builder
                         .setTitle("오류")
                         .setMessage("책을 판별하지 않았습니다\n책을 먼저 판별 시켜주세요.")
-                        .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
+                        .setPositiveButton("확인", (dialog, which) -> {
 
-                            }
                         });
                 builder.create().show();
 
@@ -252,64 +232,22 @@ public class MainActivity extends AppCompatActivity {
 
                 BitmapDrawable d = (BitmapDrawable) ((ImageView) findViewById(R.id.main_image)).getDrawable();
                 Bitmap b = d.getBitmap();
+                bimg = b;
                 //사진O. 텍스트 판별 시작
                 selectMode = 2;
                 callCloudVision(b);
-                CheckLoadingProgress task = new CheckLoadingProgress();
-                task.execute();
-
-
             }
         }
     }
 
     //************************************************
 
-    //텍스트 판별 기다리기 위한 로딩창
-    private class CheckLoadingProgress extends AsyncTask<Void, Void, Void>{
-
-        ProgressDialog asyncDialog = new ProgressDialog(MainActivity.this);
-
-        @Override
-        protected  void onPreExecute(){
-            asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            asyncDialog.setMessage("로딩중입니다...");
-
-            //show dialog
-            asyncDialog.show();
-            super.onPreExecute();
-        }
-
-        @Override
-        protected  Void doInBackground(Void... arg0){
-            try{
-                for(int i=0; i<4;i++){
-                    Thread.sleep(1000);
-                }
-            }catch (InterruptedException e){
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result){
-            asyncDialog.dismiss();
-            checkUserToInf();
-            super.onPostExecute(result);
-        }
-
-    }
-
-
-
-
-
     //책 가격을 가져오는 서버와 통신하는 부분
     public class NetworkTask extends AsyncTask<String, Void, String> {
 
         private String url;
         private ContentValues values;
+
 
         public NetworkTask(String url, ContentValues values) {
 
@@ -321,6 +259,9 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPreExecute(){
+            if(asyncDialog !=null){
+                asyncDialog.dismiss();
+            }
             asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             asyncDialog.setMessage("서버와 통신 중 입니다...");
             //show dialog
@@ -351,11 +292,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG,"sending message is the : " + serversendletter);
                 turl= url+serversendletter;
 
+
                 RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
                 result = requestHttpURLConnection.request(turl, values); // 해당 URL로 부터 결과물을 얻어온다.
 
             }
             else {
+
+
                 for (int i = 0; i < change_title.length - 1; i++) {
                     serversendletter = change_title[i] + change_title[i + 1];
                     turl = url + serversendletter;
@@ -367,8 +311,9 @@ public class MainActivity extends AppCompatActivity {
                     no sell= yes24중고책없
                      */
 
-                    RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
-                    result = requestHttpURLConnection.request(turl, values); // 해당 URL로 부터 결과물을 얻어온다.
+                    RequestHttpURLConnection requestHttpURLConnection1 = new RequestHttpURLConnection();
+                    result = requestHttpURLConnection1.request(turl, values); // 해당 URL로 부터 결과물을 얻어온다.
+                    Log.d(TAG, "sending message url is : " + turl);
 
                     if (!result.equals("no data") && !result.equals("no sell")) {
                         Log.d(TAG, "sending message url is : " + turl);
@@ -377,25 +322,69 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                 }
+
             }
 
-            /*
-            String result; // 요청 결과를 저장할 변수.
-            RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
-            result = requestHttpURLConnection.request(url, values); // 해당 URL로 부터 결과물을 얻어온다.
-               */
-            return result;
+
+            switch (result) {
+                case "no data":
+                    return "nodata";
+                case "no sell":
+                    return "nosell";
+                default:
+                    return result;
+            }
+
         }
 
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-
+            asyncDialog.dismiss();
             //doInBackground()로 부터 리턴된 값이 onPostExecute()의 매개변수로 넘어오므로 s를 출력한다.
             //해당 부분은 추후 어떠한 int값으로 전달되고, 이  int값과 aging기법으로 계산되어 사용자에게 보여진다
-            mBookTitle.setText(s);
 
-            asyncDialog.dismiss();
+            finPrice.setText(s);
+
+            switch (s) {
+                case "nodata": {
+
+                    new SweetAlertDialog(MainActivity.this, SweetAlertDialog.ERROR_TYPE)
+                            .setTitleText("오류")
+                            .setContentText("죄송합니다. \n해당 책이 존재하지 않습니다.\n" +
+                                    "다시 촬영하거나 다른 책을 시도해 주십시오.")
+                            .show();
+                    break;
+                }
+                case "nosell": {
+                    new SweetAlertDialog(MainActivity.this, SweetAlertDialog.ERROR_TYPE)
+                            .setTitleText("오류")
+                            .setContentText("죄송합니다. \n시중의 중고가격이 존재하지 않습니다.\n" +
+                                    "다시 촬영하거나 다른 책을 시도해 주십시오.")
+                            .show();
+                    break;
+                }
+                default:
+                    //다음 액티비티 전환 및 같이 넘겨줄 데이터
+                    //1.조건 3개
+                    //2. 이미지 비트맵
+                    //3.중고가
+
+                    Intent intent = new Intent(getApplicationContext(), ResultActivity.class);
+
+
+                    //조건3개
+                    intent.putExtra("con1", rgstring1);
+                    intent.putExtra("con2", rgstring2);
+                    intent.putExtra("con3", rgstring3);
+
+
+                    //중고가
+                    intent.putExtra("uprice",finPrice.getText().toString());
+
+                    startActivity(intent);
+                    break;
+            }
         }
     }
 
@@ -429,7 +418,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startServer(){
-        String url = "http://183.101.21.11:3000/?name=";//뒤에 추가로 붙여줌
+        String url = "http://cirnect.asuscomm.com:3000/?name=";//뒤에 추가로 붙여줌
+        //2019.04.10일자로 천슬별 전용 서버 생성
 
         booktitle = mBookTitle.getText().toString();
         //개행문자로 구분해서 배열에 저장함
@@ -477,9 +467,10 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == GALLERY_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
             uploadImage(data.getData());
         } else if (requestCode == CAMERA_IMAGE_REQUEST && resultCode == RESULT_OK) {
-            imgt=getCameraFile();
+            //이미지 회전을 위해 임시저장경로
+            File imgt = getCameraFile();
             Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", imgt);
-            imageFilePath=imgt.getAbsolutePath();//사진회전을 위해 저장
+            imageFilePath= imgt.getAbsolutePath();//사진회전을 위해 저장
             uploadImage(photoUri);
         }
     }
@@ -620,14 +611,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //책판별
-    private static class LableDetectionTask extends AsyncTask<Object, Void, String> {
+    private class LableDetectionTask extends AsyncTask<Object, Void, String> {
         private final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
+        ProgressDialog asyncDialog = new ProgressDialog(MainActivity.this);
+
 
         LableDetectionTask(MainActivity activity, Vision.Images.Annotate annotate) {
             mActivityWeakReference = new WeakReference<>(activity);
             mRequest = annotate;
         }
+        @Override
+        protected  void onPreExecute(){
+            if(asyncDialog !=null){
+                asyncDialog.dismiss();
+            }
+            asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            asyncDialog.setMessage("로딩중입니다...");
+
+            //show dialog
+            asyncDialog.show();
+            super.onPreExecute();
+        }
+
 
         @Override
         protected String doInBackground(Object... params) {
@@ -648,9 +654,12 @@ public class MainActivity extends AppCompatActivity {
 
         protected void onPostExecute(String result) {
             MainActivity activity = mActivityWeakReference.get();
+            asyncDialog.dismiss();
+
+
             if (activity != null && !activity.isFinishing()) {
                 TextView imageDetail = activity.findViewById(R.id.image_details);
-                TextView isbookDet = activity.findViewById(R.id.labeldetection);
+                TextView isbookDet = activity.findViewById(R.id.isbookdetection);
                 imageDetail.setText(result);
                 if(result.contains("사진")){
                     isbookDet.setText("1");
@@ -661,13 +670,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //텍스트 판별
-    private static class LableDetectionTask2 extends AsyncTask<Object, Void, String> {
+    private class LableDetectionTask2 extends AsyncTask<Object, Void, String> {
         private final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
+
+        ProgressDialog asyncDialog = new ProgressDialog(MainActivity.this);
+
 
         LableDetectionTask2(MainActivity activity, Vision.Images.Annotate annotate) {
             mActivityWeakReference = new WeakReference<>(activity);
             mRequest = annotate;
+        }
+
+        @Override
+        protected  void onPreExecute(){
+            if(asyncDialog !=null){
+                asyncDialog.dismiss();
+            }
+            asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            asyncDialog.setMessage("로딩중입니다...");
+
+            //show dialog
+            asyncDialog.show();
+            super.onPreExecute();
         }
 
         @Override
@@ -689,18 +714,25 @@ public class MainActivity extends AppCompatActivity {
 
         protected void onPostExecute(String result) {
             MainActivity activity = mActivityWeakReference.get();
+
+            asyncDialog.dismiss();
+
             if (activity != null && !activity.isFinishing()) {
                 TextView imageDetail = activity.findViewById(R.id.labeldetection);
                 imageDetail.setText(result);
                 //여기가 구글 클라우드 비전에서 결과들어오는곳
             }
+            //텍스트 판별 후 사용자에게 팝업고지
+            checkUserToInf();
         }
     }
 
 
     private void callCloudVision(final Bitmap bitmap) {
         // Switch text to loading
-        mImageDetails.setText("잠시만 기다려 주세요. 판별중입니다..");
+        if(selectMode==1) {
+            mImageDetails.setText("잠시만 기다려 주세요. 판별중입니다..");
+        }
 
         // Do the real work in an async task, because we need to use the network anyway
         try {
@@ -719,20 +751,15 @@ public class MainActivity extends AppCompatActivity {
 
     private Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
 
-        int originalWidth = bitmap.getWidth();
-        int originalHeight = bitmap.getHeight();
+        Integer originalWidth = bitmap.getWidth();
+        Integer originalHeight = bitmap.getHeight();
         int resizedWidth = maxDimension;
         int resizedHeight = maxDimension;
 
         if (originalHeight > originalWidth) {
-            resizedHeight = maxDimension;
             resizedWidth = (int) (resizedHeight * (float) originalWidth / (float) originalHeight);
         } else if (originalWidth > originalHeight) {
-            resizedWidth = maxDimension;
             resizedHeight = (int) (resizedWidth * (float) originalHeight / (float) originalWidth);
-        } else if (originalHeight == originalWidth) {
-            resizedHeight = maxDimension;
-            resizedWidth = maxDimension;
         }
         return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false);
     }
@@ -741,26 +768,33 @@ public class MainActivity extends AppCompatActivity {
     //*********************************
 
     public void checkUserToInf(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder//여기에 텍스트 넣을 방법 찾아야함
-                .setTitle("알림")
-                .setMessage("확인된 책의 제목은 다음과 같습니다.\n" + mBookTitle.getText().toString()
-                        +"\n또한, 선택하신 조건은 아래와 같습니다.\n"+rgstring1
-                        + " " + rgstring2+" "+ rgstring3
-                        +"\n중고가 측정을 시작하려면 판별 시작버튼을," +
-                        "\n다시 시도하시려면 취소 버튼을 눌러주세요.")
-                .setPositiveButton("판별 시작", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        //다음 화면으로 넘어가기 시작
-                        ;
-                    }
-                })
-                .setNegativeButton("취소", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.CustomDialogSetting);
+        String con1 = getString(R.string.condition1);
+        String con2 = getString(R.string.condition2);
+        String con3 = getString(R.string.condition3);
+        TextView title = new TextView(this);
+        title.setText("알림");
+        title.setGravity(Gravity.CENTER);
+        title.setTextSize(20);
+        title.setTextColor(Color.BLACK);
+        builder
+                .setCustomTitle(title)
+                .setMessage("##확인된 책의 제목은 다음과 같습니다.##\n" +
+                        mBookTitle.getText().toString()
+                        +"\n##또한, 선택하신 조건은 아래와 같습니다.##\n"+
+                        con1 + " : " + rgstring1 +"\n" +
+                        con2 + " : " + rgstring2 +"\n" +
+                        con3 + " : " + rgstring3 +"\n" +
+                        "------------------------\n"
+                        +"중고가 측정을 시작하려면 판별 시작버튼을\n" +
+                        "다시 시도하시려면 취소 버튼을 눌러주세요.")
+                .setPositiveButton("판별 시작", (dialog, which) -> {
+                    //다음 화면으로 넘어가기 시작
+                    startServer();
 
-                    }
+                })
+                .setNegativeButton("취소", (dialog, which) -> {
+
                 });
         builder.create().show();
     }
@@ -779,7 +813,7 @@ public class MainActivity extends AppCompatActivity {
                         || label.getDescription().equals("Book"))  {
                     message = new StringBuilder("이 사진은" + " ");
                     String ss = String.format(Locale.US, "%.3f", label.getScore());
-                    Float ft = Float.parseFloat(ss);
+                    float ft = Float.parseFloat(ss);
                     ft=ft*100;
                     message.append(ft + " % 확률로 책입니다!");
 
@@ -809,4 +843,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return message;
     }
+
+
+
 }

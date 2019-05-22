@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/bg"
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
@@ -11,14 +12,17 @@
         android:id="@+id/include"
         layout="@layout/content_main" />
 
+
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="@android:drawable/ic_menu_camera"
-        app:backgroundTint="@color/colorPrimary"
+        android:layout_marginStart="100dp"
+        android:layout_marginBottom="16dp"
+        android:layout_weight="1"
+        android:src="@drawable/ic_camera"
+        app:backgroundTint="#FF35DAFF"
         app:layout_anchor="@+id/include"
         app:layout_anchorGravity="bottom|left" />
 
@@ -26,19 +30,13 @@
         android:id="@+id/textsearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="?android:attr/actionModeWebSearchDrawable"
-        app:backgroundTint="@color/colorPrimaryDark"
+        android:layout_marginEnd="100dp"
+        android:layout_marginBottom="16dp"
+        android:layout_weight="1"
+        android:src="@drawable/ic_search"
+        app:backgroundTint="#FFE642FF"
         app:layout_anchor="@+id/include"
-        app:layout_anchorGravity="bottom|center" />
+        app:layout_anchorGravity="bottom|right" />
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/searchserver"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="?android:attr/actionModeWebSearchDrawable"
-        app:layout_anchor="@+id/include"
-        app:layout_anchorGravity="right|bottom" />
 
 </android.support.design.widget.CoordinatorLayout>
