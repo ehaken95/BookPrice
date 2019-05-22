@@ -16,15 +16,18 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="vertical">
+
         <TextView
             android:id="@+id/textView"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="0dp"
             android:layout_weight="1"
             android:gravity="center"
             android:text="사진을 촬영해 주세요"
             android:textColor="@color/text_white"
-            android:textSize="20dp" />
+            android:textSize="24sp" />
     </LinearLayout>
 
 
@@ -48,15 +51,16 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="vertical">
+
         <TextView
             android:id="@+id/image_details"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:textSize="16dp"
             android:gravity="center"
+            android:text="책이 아닌지 판별해 드립니다!카메라 버튼을 클릭하세요"
             android:textColor="@color/text_white"
-            android:text="책이 아닌지 판별해 드립니다!카메라 버튼을 클릭하세요" />
+            android:textSize="18sp" />
     </LinearLayout>
 
 
@@ -70,11 +74,11 @@
             android:id="@+id/textView2"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:gravity="center"
             android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/condition1"
             android:textColor="@color/text_white"
-            android:textSize="16dp"
-            android:text="@string/condition1" />
+            android:textSize="18sp" />
     </LinearLayout>
 
 
@@ -104,7 +108,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="매우심함"
+                android:text="@string/conA"
                 android:textSize="20dp" />
 
             <RadioButton
@@ -114,7 +118,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:textSize="20dp"
-                android:text="보통" />
+                android:text="@string/conB" />
 
             <RadioButton
                 android:id="@+id/rop1_3"
@@ -123,7 +127,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:textSize="20dp"
-                android:text="매우깔끔" />
+                android:text="@string/conC" />
         </info.hoang8f.android.segmented.SegmentedGroup>
     </LinearLayout>
 
@@ -142,9 +146,9 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="center"
+            android:text="@string/condition2"
             android:textColor="@color/text_white"
-            android:textSize="16dp"
-            android:text="@string/condition2" />
+            android:textSize="18sp" />
     </LinearLayout>
 
 
@@ -173,7 +177,7 @@
                 android:layout_weight="1"
                 style="@style/RadioButton"
                 android:textSize="20dp"
-                android:text="매우심함" />
+                android:text="@string/conA" />
 
             <RadioButton
                 android:id="@+id/rop2_2"
@@ -182,7 +186,7 @@
                 android:layout_weight="1"
                 style="@style/RadioButton"
                 android:textSize="20dp"
-                android:text="보통" />
+                android:text="@string/conB" />
 
             <RadioButton
                 android:id="@+id/rop2_3"
@@ -191,7 +195,7 @@
                 android:layout_weight="1"
                 style="@style/RadioButton"
                 android:textSize="20dp"
-                android:text="매우깔끔" />
+                android:text="@string/conC" />
         </info.hoang8f.android.segmented.SegmentedGroup>
     </LinearLayout>
 
@@ -209,11 +213,11 @@
             android:id="@+id/textView5"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:gravity="center"
-            android:textColor="@color/text_white"
-            android:textSize="16dp"
             android:layout_weight="1"
-            android:text="@string/condition3" />
+            android:gravity="center"
+            android:text="@string/condition3"
+            android:textColor="@color/text_white"
+            android:textSize="18sp" />
     </LinearLayout>
 
 
@@ -242,7 +246,7 @@
                 android:layout_weight="1"
                 android:textSize="20dp"
                 style="@style/RadioButton"
-                android:text="10년 이내" />
+                android:text="@string/pconA" />
 
             <RadioButton
                 android:id="@+id/rop3_2"
@@ -251,7 +255,7 @@
                 android:layout_weight="1"
                 android:textSize="20dp"
                 style="@style/RadioButton"
-                android:text="5년 이내" />
+                android:text="@string/pconB" />
 
             <RadioButton
                 android:id="@+id/rop3_3"
@@ -260,7 +264,7 @@
                 android:layout_weight="1"
                 android:textSize="20dp"
                 style="@style/RadioButton"
-                android:text="1년 이내" />
+                android:text="@string/pconC" />
         </info.hoang8f.android.segmented.SegmentedGroup>
     </LinearLayout>
 
@@ -278,6 +282,7 @@
             android:id="@+id/labeldetection"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:textColor="@color/bg"
             android:layout_weight="1"
             android:text="label" />
 
@@ -286,6 +291,15 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:textColor="@color/bg"
+            android:text="0" />
+
+        <TextView
+            android:id="@+id/main_finprice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/bg"
             android:text="0" />
     </LinearLayout>
 

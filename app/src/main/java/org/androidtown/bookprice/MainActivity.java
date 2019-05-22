@@ -49,6 +49,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import cn.pedant.SweetAlert.SweetAlertDialog;
+
 
 public class MainActivity extends AppCompatActivity {
     private static final String CLOUD_VISION_API_KEY = "AIzaSyBruupeW_frxcoDgd_-ggl-tPwQVZ_t2ns";
@@ -66,8 +68,10 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView mImageDetails;
     private TextView mBookTitle;//보이지 않는 텍스트뷰
+    private TextView finPrice;
     private ImageView mMainImage;
     private String imageFilePath;
+    public Bitmap bimg;
     public  String booktitle;
     public int selectMode=1;//1이면 책판별, 2이면 텍스트 판별
     public String rgstring1="x";
@@ -155,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 sel3 = 2;
             }
             else if( i == R.id.rop3_3){
-                rgstring3 = "11년 이내";
+                rgstring3 = "1년 이내";
                 sel3 = 3;
             }
         });
@@ -167,9 +171,12 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             selectMode=1;
             builder
-                    .setMessage("사진을 불러올 기능을 선택해 주세요")
-                    .setNegativeButton("갤러리", (dialog, which) -> startGalleryChooser())
-                    .setPositiveButton("카메라", (dialog, which) -> startCamera());
+                    .setMessage("카메라를 실행합니다.")
+                    .setNegativeButton("취소",
+                            (dialog, whichButton) -> {
+                                // Cancel 버튼 클릭시
+                            })
+                    .setPositiveButton("확인", (dialog, which) -> startCamera());
             builder.create().show();
 
         });
@@ -180,28 +187,24 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             selectMode=2;
             builder
-                    .setMessage("책 속의 텍스트 판별")
-                    .setPositiveButton("테스트 시작", (dialog, which) -> CheckPicture());
+                    .setMessage("책 속의 텍스트를 판별합니다.")
+                    .setNegativeButton("취소", (dialog, which) -> {})
+                    .setPositiveButton("판별하기", (dialog, which) -> CheckPicture());
             builder.create().show();
 
-        });//버튼만 누르면 알아서 되게끔 수정할것
-
-
-
-
+        });
 
         mImageDetails = findViewById(R.id.image_details);
         mMainImage = findViewById(R.id.main_image);
         //보이지 않는 텍스트뷰
         mBookTitle = findViewById(R.id.labeldetection);
-
+        finPrice = findViewById(R.id.main_finprice);
 
     }
 
     //******************************************
     public void CheckPicture(){
 
-        //TextView isb = findViewById(R.id.labeldetection);
         TextView isbk = findViewById(R.id.isbookdetection);
         String isbook = isbk.getText().toString();
         if(rgstring1.equals("x") || rgstring2.equals("x") || rgstring3.equals("x")){
@@ -229,64 +232,22 @@ public class MainActivity extends AppCompatActivity {
 
                 BitmapDrawable d = (BitmapDrawable) ((ImageView) findViewById(R.id.main_image)).getDrawable();
                 Bitmap b = d.getBitmap();
+                bimg = b;
                 //사진O. 텍스트 판별 시작
                 selectMode = 2;
                 callCloudVision(b);
-                CheckLoadingProgress task = new CheckLoadingProgress();
-                task.execute();
-
-
             }
         }
     }
 
     //************************************************
 
-    //텍스트 판별 기다리기 위한 로딩창
-    private class CheckLoadingProgress extends AsyncTask<Void, Void, Void>{
-
-        ProgressDialog asyncDialog = new ProgressDialog(MainActivity.this);
-
-        @Override
-        protected  void onPreExecute(){
-            asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            asyncDialog.setMessage("로딩중입니다...");
-
-            //show dialog
-            asyncDialog.show();
-            super.onPreExecute();
-        }
-
-        @Override
-        protected  Void doInBackground(Void... arg0){
-            try{
-                for(int i=0; i<4;i++){
-                    Thread.sleep(100);
-                }
-            }catch (InterruptedException e){
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result){
-            asyncDialog.dismiss();
-            checkUserToInf();
-            super.onPostExecute(result);
-        }
-
-    }
-
-
-
-
-
     //책 가격을 가져오는 서버와 통신하는 부분
     public class NetworkTask extends AsyncTask<String, Void, String> {
 
         private String url;
         private ContentValues values;
+
 
         public NetworkTask(String url, ContentValues values) {
 
@@ -298,6 +259,9 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPreExecute(){
+            if(asyncDialog !=null){
+                asyncDialog.dismiss();
+            }
             asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             asyncDialog.setMessage("서버와 통신 중 입니다...");
             //show dialog
@@ -328,11 +292,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG,"sending message is the : " + serversendletter);
                 turl= url+serversendletter;
 
+
                 RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
                 result = requestHttpURLConnection.request(turl, values); // 해당 URL로 부터 결과물을 얻어온다.
 
             }
             else {
+
+
                 for (int i = 0; i < change_title.length - 1; i++) {
                     serversendletter = change_title[i] + change_title[i + 1];
                     turl = url + serversendletter;
@@ -344,8 +311,9 @@ public class MainActivity extends AppCompatActivity {
                     no sell= yes24중고책없
                      */
 
-                    RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
-                    result = requestHttpURLConnection.request(turl, values); // 해당 URL로 부터 결과물을 얻어온다.
+                    RequestHttpURLConnection requestHttpURLConnection1 = new RequestHttpURLConnection();
+                    result = requestHttpURLConnection1.request(turl, values); // 해당 URL로 부터 결과물을 얻어온다.
+                    Log.d(TAG, "sending message url is : " + turl);
 
                     if (!result.equals("no data") && !result.equals("no sell")) {
                         Log.d(TAG, "sending message url is : " + turl);
@@ -354,25 +322,69 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                 }
+
             }
 
-            /*
-            String result; // 요청 결과를 저장할 변수.
-            RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
-            result = requestHttpURLConnection.request(url, values); // 해당 URL로 부터 결과물을 얻어온다.
-               */
-            return result;
+
+            switch (result) {
+                case "no data":
+                    return "nodata";
+                case "no sell":
+                    return "nosell";
+                default:
+                    return result;
+            }
+
         }
 
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-
+            asyncDialog.dismiss();
             //doInBackground()로 부터 리턴된 값이 onPostExecute()의 매개변수로 넘어오므로 s를 출력한다.
             //해당 부분은 추후 어떠한 int값으로 전달되고, 이  int값과 aging기법으로 계산되어 사용자에게 보여진다
-            mBookTitle.setText(s);
 
-            asyncDialog.dismiss();
+            finPrice.setText(s);
+
+            switch (s) {
+                case "nodata": {
+
+                    new SweetAlertDialog(MainActivity.this, SweetAlertDialog.ERROR_TYPE)
+                            .setTitleText("오류")
+                            .setContentText("죄송합니다. \n해당 책이 존재하지 않습니다.\n" +
+                                    "다시 촬영하거나 다른 책을 시도해 주십시오.")
+                            .show();
+                    break;
+                }
+                case "nosell": {
+                    new SweetAlertDialog(MainActivity.this, SweetAlertDialog.ERROR_TYPE)
+                            .setTitleText("오류")
+                            .setContentText("죄송합니다. \n시중의 중고가격이 존재하지 않습니다.\n" +
+                                    "다시 촬영하거나 다른 책을 시도해 주십시오.")
+                            .show();
+                    break;
+                }
+                default:
+                    //다음 액티비티 전환 및 같이 넘겨줄 데이터
+                    //1.조건 3개
+                    //2. 이미지 비트맵
+                    //3.중고가
+
+                    Intent intent = new Intent(getApplicationContext(), ResultActivity.class);
+
+
+                    //조건3개
+                    intent.putExtra("con1", rgstring1);
+                    intent.putExtra("con2", rgstring2);
+                    intent.putExtra("con3", rgstring3);
+
+
+                    //중고가
+                    intent.putExtra("uprice",finPrice.getText().toString());
+
+                    startActivity(intent);
+                    break;
+            }
         }
     }
 
@@ -406,7 +418,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startServer(){
-        String url = "cirnect.asuscomm.com:3000/?name=";//뒤에 추가로 붙여줌
+        String url = "http://cirnect.asuscomm.com:3000/?name=";//뒤에 추가로 붙여줌
         //2019.04.10일자로 천슬별 전용 서버 생성
 
         booktitle = mBookTitle.getText().toString();
@@ -599,14 +611,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //책판별
-    private static class LableDetectionTask extends AsyncTask<Object, Void, String> {
+    private class LableDetectionTask extends AsyncTask<Object, Void, String> {
         private final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
+        ProgressDialog asyncDialog = new ProgressDialog(MainActivity.this);
+
 
         LableDetectionTask(MainActivity activity, Vision.Images.Annotate annotate) {
             mActivityWeakReference = new WeakReference<>(activity);
             mRequest = annotate;
         }
+        @Override
+        protected  void onPreExecute(){
+            if(asyncDialog !=null){
+                asyncDialog.dismiss();
+            }
+            asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            asyncDialog.setMessage("로딩중입니다...");
+
+            //show dialog
+            asyncDialog.show();
+            super.onPreExecute();
+        }
+
 
         @Override
         protected String doInBackground(Object... params) {
@@ -627,6 +654,9 @@ public class MainActivity extends AppCompatActivity {
 
         protected void onPostExecute(String result) {
             MainActivity activity = mActivityWeakReference.get();
+            asyncDialog.dismiss();
+
+
             if (activity != null && !activity.isFinishing()) {
                 TextView imageDetail = activity.findViewById(R.id.image_details);
                 TextView isbookDet = activity.findViewById(R.id.isbookdetection);
@@ -640,13 +670,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //텍스트 판별
-    private static class LableDetectionTask2 extends AsyncTask<Object, Void, String> {
+    private class LableDetectionTask2 extends AsyncTask<Object, Void, String> {
         private final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
+
+        ProgressDialog asyncDialog = new ProgressDialog(MainActivity.this);
+
 
         LableDetectionTask2(MainActivity activity, Vision.Images.Annotate annotate) {
             mActivityWeakReference = new WeakReference<>(activity);
             mRequest = annotate;
+        }
+
+        @Override
+        protected  void onPreExecute(){
+            if(asyncDialog !=null){
+                asyncDialog.dismiss();
+            }
+            asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            asyncDialog.setMessage("로딩중입니다...");
+
+            //show dialog
+            asyncDialog.show();
+            super.onPreExecute();
         }
 
         @Override
@@ -668,11 +714,16 @@ public class MainActivity extends AppCompatActivity {
 
         protected void onPostExecute(String result) {
             MainActivity activity = mActivityWeakReference.get();
+
+            asyncDialog.dismiss();
+
             if (activity != null && !activity.isFinishing()) {
                 TextView imageDetail = activity.findViewById(R.id.labeldetection);
                 imageDetail.setText(result);
                 //여기가 구글 클라우드 비전에서 결과들어오는곳
             }
+            //텍스트 판별 후 사용자에게 팝업고지
+            checkUserToInf();
         }
     }
 
@@ -739,8 +790,7 @@ public class MainActivity extends AppCompatActivity {
                         "다시 시도하시려면 취소 버튼을 눌러주세요.")
                 .setPositiveButton("판별 시작", (dialog, which) -> {
                     //다음 화면으로 넘어가기 시작
-                    //startserver()임
-                    ;
+                    startServer();
 
                 })
                 .setNegativeButton("취소", (dialog, which) -> {
@@ -793,4 +843,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return message;
     }
+
+
+
 }
