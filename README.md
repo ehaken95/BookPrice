@@ -1,9 +1,9 @@
-# ClassicBook
+# BookPrice
 2019-1 세종대학교 캡스톤 제작 어플리케이션
 
 #머신러닝을 통한 중고책 거래가 자동측정 모듈 구축
 -------------------------------------
-#어플리케이션 제작 개요
+#Automatic Measurement Module for Used Book Transactions through Machine Learning
 
 This is an application to check the operation of the modules that our team has produced. 
 
