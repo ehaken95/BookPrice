@@ -284,10 +284,17 @@ public class MainActivity extends AppCompatActivity {
             for(int i=0;i<change_title.length;i++){
                 change_title[i]=change_title[i].replaceAll(" ","");
             }
+            //1줄일때
+            if(params.length==1){
+                serversendletter = change_title[0];
 
+                turl = url + serversendletter;
+                RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
+                result = requestHttpURLConnection.request(turl, values); // 해당 URL로 부터 결과물을 얻어온다.
+;            }
             //12 23 34 45 식으로 서버에 계속 전송
-            if(params.length==2)
-            {
+            else if(params.length==2)
+            {//2줄일때
                 serversendletter = change_title[0]+change_title[1];
                 Log.d(TAG,"sending message is the : " + serversendletter);
                 turl= url+serversendletter;
